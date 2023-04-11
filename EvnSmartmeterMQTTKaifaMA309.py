@@ -51,7 +51,7 @@ ser = serial.Serial( port=comport,
 
 while 1:
     daten = ser.read(size=282).hex()
-    print(daten)
+    #print(daten)
 
     msg = GXDLMSTranslatorMessage()
     msg.message = GXByteBuffer(daten)
@@ -62,7 +62,7 @@ while 1:
         pdu.clear()
         xml += tr.messageToXml(msg)
 
-    soup = BeautifulSoup(xml, 'lxml')
+    soup = BeautifulSoup(xml, 'html.parser')
 
     results_32 = soup.find_all('uint32')
     results_16 = soup.find_all('uint16')
