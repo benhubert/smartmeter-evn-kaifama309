@@ -3,4 +3,3 @@ gurux-dlms==1.0.204
 beautifulsoup4==4.15.0
 paho-mqtt==2.2.0
 pyserial==3.5
-cryptography==50.0.2

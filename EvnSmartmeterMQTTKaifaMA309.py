@@ -1,7 +1,5 @@
 from gurux_dlms.GXByteBuffer import GXByteBuffer
 import serial
-import time
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from binascii import unhexlify
 import sys
 import os
@@ -35,15 +33,30 @@ if not evn_schluessel:
     sys.exit(1)
 
 
+def on_connect(client, userdata, flags, reason_code, properties):
+    if reason_code.is_failure:
+        print("MQTT Verbindung abgelehnt: " + str(reason_code))
+    else:
+        print("MQTT verbunden")
+
+
+def on_disconnect(client, userdata, flags, reason_code, properties):
+    print("MQTT Verbindung verloren (" + str(reason_code) + "), versuche neu zu verbinden...")
+
+
 #MQTT Init
 if useMQTT:
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="SmartMeter")
+    client.username_pw_set(mqttuser, mqttpasswort)
+    client.on_connect = on_connect
+    client.on_disconnect = on_disconnect
     try:
-        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="SmartMeter")
-        client.username_pw_set(mqttuser, mqttpasswort)
         client.connect(mqttBroker, port=1883)
-    except:
-        print("Die Ip Adresse des Brokers ist falsch!")
-        sys.exit()
+    except OSError as err:
+        print("Verbindung zum MQTT Broker " + mqttBroker + " fehlgeschlagen: " + str(err))
+        sys.exit(1)
+    # Network thread keeps the session alive and reconnects on its own after a connection loss.
+    client.loop_start()
 
 
 
@@ -133,16 +146,8 @@ while 1:
 
 
     #MQTT
-    if useMQTT:
-        connected = False
-        while not connected:
-            try:
-                client.reconnect()
-                connected = True
-            except:
-                print("Lost Connection to MQTT...Trying to reconnect in 2 Seconds")
-                time.sleep(2)
-
+    # Readings arriving while disconnected are dropped; the next push from the meter follows within seconds.
+    if useMQTT and client.is_connected():
         client.publish("Smartmeter/WirkenergieP", WirkenergieP)
         client.publish("Smartmeter/WirkenergieN", WirkenergieN)
         client.publish("Smartmeter/MomentanleistungP", MomentanleistungP)
