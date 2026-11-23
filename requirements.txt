@@ -1,5 +1,6 @@
 # Python Requirements
-gurux-dlms==1.0.204
+gurux-dlms==1.0.179
 beautifulsoup4==4.15.0
 paho-mqtt==2.2.0
 pyserial==3.5
+setuptools==81.0.0
