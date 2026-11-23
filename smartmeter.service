@@ -1,0 +1,21 @@
+[Unit]
+Description=EVN Smartmeter Kaifa MA309 auslesen
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=smartmeter
+# Zugriff auf /dev/ttyUSB*
+SupplementaryGroups=dialout
+WorkingDirectory=/opt/smartmeter-evn-kaifama309
+ExecStart=/opt/smartmeter-evn-kaifama309/venv/bin/python EvnSmartmeterMQTTKaifaMA309.py
+EnvironmentFile=/etc/smartmeter.env
+# Alternativ einzelne Werte direkt setzen, zB.:
+# Environment=EVN_KEY=36C66639E48A8CA4D6BC8B282A793BBB
+Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

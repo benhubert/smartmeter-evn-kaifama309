@@ -4,33 +4,41 @@ import time
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from binascii import unhexlify
 import sys
+import os
 import string
 import paho.mqtt.client as mqtt
 from gurux_dlms.GXDLMSTranslator import GXDLMSTranslator
 from gurux_dlms.GXDLMSTranslatorMessage import GXDLMSTranslatorMessage
 from bs4 import BeautifulSoup
 
-# EVN Schlüssel eingeben zB. "36C66639E48A8CA4D6BC8B282A793BBB"
-evn_schluessel = "dein_Schlüssel"
 
-#MQTT Verwenden (True | False)
-useMQTT = False
+def env_bool(name, default):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in ("1", "true", "yes", "on")
 
-#MQTT Broker IP adresse Eingeben ohne Port!
-mqttBroker = "192.168.1.10"
-mqttuser =""
-mqttpasswort = ""
-#Aktuelle Werte auf Console ausgeben (True | False)
-printValue = True
 
-#Comport Config/Init
-comport = "/dev/ttyUSB0"
+# Konfiguration über Umgebungsvariablen, siehe smartmeter.env.example
+# EVN Schlüssel zB. "36C66639E48A8CA4D6BC8B282A793BBB"
+evn_schluessel = os.environ.get("EVN_KEY", "")
+useMQTT = env_bool("MQTT_ENABLED", False)
+# MQTT Broker IP Adresse ohne Port
+mqttBroker = os.environ.get("MQTT_BROKER", "192.168.1.10")
+mqttuser = os.environ.get("MQTT_USER", "")
+mqttpasswort = os.environ.get("MQTT_PASSWORD", "")
+printValue = env_bool("PRINT_VALUES", True)
+comport = os.environ.get("SERIAL_PORT", "/dev/ttyUSB0")
+
+if not evn_schluessel:
+    print("Kein EVN Schlüssel gesetzt (Umgebungsvariable EVN_KEY)!")
+    sys.exit(1)
 
 
 #MQTT Init
 if useMQTT:
     try:
-        client = mqtt.Client("SmartMeter")
+        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="SmartMeter")
         client.username_pw_set(mqttuser, mqttpasswort)
         client.connect(mqttBroker, port=1883)
     except:
